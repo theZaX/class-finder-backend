@@ -58,6 +58,9 @@ if(requestedOffering === "EnglishConnect"){
     else return false;
   })
 }
+else if(requestedOffering === null || requestedOffering === undefined || requestedOffering === ""){
+  filteredArray = classesWithDistance;
+}
 else{
   //if it is anything else filter based on the requested offering query
   filteredArray = classesWithDistance.filter((classData) => {
