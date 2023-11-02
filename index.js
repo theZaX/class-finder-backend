@@ -1,84 +1,66 @@
 const express = require('express')
+var cors = require('cors');
 const app = express()
-const port = 3000
 const getConnectedClient = require("./database")
 const geocode = require('./mapsclient')
-const calculateDistance = require('./calculate-distance')
+const filterClasses = require('./filter-classes')
+
+app.use(cors());
 
 app.get('/', async (req, res) => {
-
-
   const client = await getConnectedClient();
-  const result = await client.sql`select * from master_calendar`
+  //"x-appengine-city":"bossier city"
+  //"x-appengine-citylatlong":"32.515985,-93.732123"
 
-  res.json(result)
+  const data = {
+    city: req.headers["x-appengine-city"],
+    cityLatLong: req.headers["x-appengine-citylatlong"],
+  }
+  console.log(data);
+  //{"city":"bossier city","cityLatLong":"32.515985,-93.732123"}
+  //code to parse the address
+  const parseLL = (ll_string) => {
+    // Find the index of the colon to split the string
+    // Extract the numbers substring
+    // Split the substring by the comma
+    const numbersArray = ll_string.split(',');
+    // Convert the numbers to floating-point values
+    const latitude = parseFloat(numbersArray[0]);
+    const longitude = parseFloat(numbersArray[1]);
+    console.log(latitude);
+    console.log(longitude);
+    // Create an object with the extracted numbers
+    const cityLatLongObject = {
+      latitude,
+      longitude,
+    };
+    return cityLatLongObject;
+  }
+
+  target_city = data.city
+  console.log(target_city);
+  
+  target_lat_lng = parseLL(data.cityLatLong);
+  console.log(target_lat_lng);
+  const requestedOffering = "";
+  const finalArray = (await filterClasses(requestedOffering, target_lat_lng.latitude, target_lat_lng.longitude)).finalArray
+  res.send(finalArray);
 })
 
 app.get('/map', async (req, res) => {
 
-   const location = req.query.location
-   let requestedOffering = req.query.offering
-
-
-
-
+  const location = req.query.location
   const result = await geocode(location);
   const targetLat = result.geometry.location.lat;
   const targetLng = result.geometry.location.lng;
   console.log(targetLat + " " + targetLng);
-  // res.send(result);
-  const client = await getConnectedClient();
-  const classesData= await client.sql`select address_formatted, id, days_class_held, start_time, lat, lng, city, class_offering from master_calendar`
+  let requestedOffering = req.query.offering
 
-  //creates an array with classes containing the distance from the provided location
+  const finalArray = (await filterClasses(requestedOffering, targetLat, targetLng)).finalArray
 
-
-const classesWithDistance = classesData.rows.map((classRecord) => {
-      const distanceBetween = calculateDistance(
-        classRecord.lat, 
-        classRecord.lng, 
-        targetLat,
-        targetLng
-      );
-    
-      return {
-        ...classRecord,
-        distanceBetween
-      };
-  });
-
-classesWithDistance.sort((a,b) => a.distanceBetween - b.distanceBetween);
-//if the requested class is english connect then filter for both english connect one and two
-let filteredArray;
-if(requestedOffering === "EnglishConnect"){
-  filteredArray = classesWithDistance.filter((classData) => {
-    if(classData.class_offering === "EnglishConnect 1" || classData.class_offering === "EnglishConnect 2" ){
-      return true;
-    }
-    else return false;
-  })
-}
-else if(requestedOffering === null || requestedOffering === undefined || requestedOffering === ""){
-  filteredArray = classesWithDistance;
-}
-else{
-  //if it is anything else filter based on the requested offering query
-  filteredArray = classesWithDistance.filter((classData) => {
-    if(classData.class_offering === requestedOffering ){
-      return true;
-    }
-    else return false;
-  })
-}
-
-//slices the top 10 closest classes
-const finalArray = filteredArray.slice(0,10);
-//sends the final array
-res.send(finalArray);  
+  //sends the final array
+  res.send(finalArray);
 })
 
+module.exports.app = app
 
-
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
