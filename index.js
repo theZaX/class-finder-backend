@@ -7,6 +7,9 @@ const filterClasses = require('./filter-classes')
 
 app.use(cors());
 
+// the "/" endpoint should be used only for the initial request of 
+// the classes closest to the location they are using their computer from
+//IMPLEMENT: an offering query parameter
 app.get('/', async (req, res) => {
   const client = await getConnectedClient();
   //"x-appengine-city":"bossier city"
@@ -47,6 +50,9 @@ app.get('/', async (req, res) => {
   res.send(finalArray);
 })
 
+//the "/map" endpoint is used when you search for a location different
+//than the one detected. query parameters of location and offering are useable
+//must implement where if an offering parameter is not provided
 app.get('/map', async (req, res) => {
 
   const location = req.query.location
