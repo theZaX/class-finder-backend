@@ -65,7 +65,7 @@ app.get("/", async (req, res) => {
 //than the one detected. query parameters of location and offering are useable
 //must implement where if an offering parameter is not provided
 app.get("/map", async (req, res) => {
-  const location = req.query.location;
+  const location = req.query.location || "";
   const result = await geocode(location);
   const targetLat = result.geometry.location.lat;
   const targetLng = result.geometry.location.lng;
