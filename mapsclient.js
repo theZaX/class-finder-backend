@@ -12,6 +12,8 @@ const geocode = async (address) => {
     },
   });
 
+  console.log(geocoding.data.results[0]);
+
   return geocoding.data.results[0];
 };
 

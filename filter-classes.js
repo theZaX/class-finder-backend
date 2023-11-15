@@ -25,6 +25,7 @@ const filterClasses = async (requestedOffering, targetLat, targetLng) => {
   classesWithDistance.sort((a, b) => a.distanceBetween - b.distanceBetween);
   //if the requested class is english connect then filter for both english connect one and two
   let filteredArray;
+
   if (requestedOffering === "EnglishConnect") {
     filteredArray = classesWithDistance.filter((classData) => {
       if (
@@ -37,7 +38,8 @@ const filterClasses = async (requestedOffering, targetLat, targetLng) => {
   } else if (
     requestedOffering === null ||
     requestedOffering === undefined ||
-    requestedOffering === ""
+    requestedOffering === "" ||
+    requestedOffering == "all"
   ) {
     filteredArray = classesWithDistance;
   } else {
