@@ -4,7 +4,7 @@ const filterClasses = async (requestedOffering, targetLat, targetLng) => {
   // res.send(result);
   const client = await getConnectedClient();
   const classesData =
-    await client.sql`select address_formatted, id, days_class_held, start_time, lat, lng, city, class_offering from master_calendar`;
+    await client.sql`select address_formatted, active, id, days_class_held, start_time, lat, lng, city, class_offering from master_calendar`;
 
   //creates an array with classes containing the distance from the provided location
 
@@ -50,6 +50,10 @@ const filterClasses = async (requestedOffering, targetLat, targetLng) => {
       } else return false;
     });
   }
+
+  // Filter by active classes
+  filteredArray = filteredArray.filter((classData) => classData.active);
+
   const finalArray = filteredArray.slice(0, 10);
   return finalArray;
 };
