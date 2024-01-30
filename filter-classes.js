@@ -5,6 +5,7 @@ const filterClasses = async (requestedOffering, targetLat, targetLng) => {
   const client = await getConnectedClient();
   const classesData =
     await client.sql`select address_formatted, active, id, days_class_held, start_time, lat, lng, city, class_offering from master_calendar`;
+    await client.end();
 
   //creates an array with classes containing the distance from the provided location
 
