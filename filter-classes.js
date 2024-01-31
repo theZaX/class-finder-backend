@@ -5,7 +5,7 @@ const filterClasses = async (requestedOffering, targetLat, targetLng) => {
   const client = await getConnectedClient();
   const classesData =
     await client.sql`select address_formatted, active, id, days_class_held, start_time, lat, lng, city, class_offering from master_calendar`;
-    await client.end();
+  await client.end();
 
   //creates an array with classes containing the distance from the provided location
 
@@ -53,6 +53,10 @@ const filterClasses = async (requestedOffering, targetLat, targetLng) => {
   }
 
   // Filter by active classes
+
+  // todo: add a filter for ending and starting date.
+  // class has to have a start date that is within the next 14 days and an end date that is after the current date
+
   filteredArray = filteredArray.filter((classData) => classData.active);
 
   const finalArray = filteredArray.slice(0, 10);
