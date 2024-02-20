@@ -16,10 +16,8 @@ app.get("/", async (req, res) => {
     // "x-appengine-citylatlong":"32.515985,-93.732123"
 
     const data = {
-      // city: req.headers["x-appengine-city"],
-      // cityLatLong: req.headers["x-appengine-citylatlong"],
-      city: "bossier city",
-      cityLatLong: "32.515985,-93.732123",
+      city: req.headers["x-appengine-city"],
+      cityLatLong: req.headers["x-appengine-citylatlong"],
     };
 
     // example data
