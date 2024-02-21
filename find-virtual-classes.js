@@ -1,36 +1,32 @@
 const getConnectedClient = require("./database");
 const calculateDistance = require("./calculate-distance");
 const filterClasses = async (requestedOffering, targetLat, targetLng) => {
-  // res.send(result);
   const client = await getConnectedClient();
   const classesData =
     await client.sql`select address_formatted, active, id, days_class_held, start_time, lat, lng, city, class_offering, class_modality from master_calendar`;
-    await client.end();
-
-  //creates an array with classes containing the distance from the provided location
-  
+  await client.end();
 
   const classesWithDistance = classesData.rows
-  
-  .filter((classRecord) => {
-    // Add your filter condition here, for example:
-    // Only include classes with class_modality of 'virtual'
-    return classRecord.class_modality === 'Virtual-Online';
-  })
-  
-  .map((classRecord) => {
-    const distanceBetween = calculateDistance(
-      classRecord.lat,
-      classRecord.lng,
-      targetLat,
-      targetLng
-    );
 
-    return {
-      ...classRecord,
-      distanceBetween,
-    };
-  });
+    .filter((classRecord) => {
+      // Add your filter condition here, for example:
+      // Only include classes with class_modality of 'virtual'
+      return classRecord.class_modality === "Virtual-Online";
+    })
+
+    .map((classRecord) => {
+      const distanceBetween = calculateDistance(
+        classRecord.lat,
+        classRecord.lng,
+        targetLat,
+        targetLng
+      );
+
+      return {
+        ...classRecord,
+        distanceBetween,
+      };
+    });
 
   classesWithDistance.sort((a, b) => a.distanceBetween - b.distanceBetween);
   //if the requested class is english connect then filter for both english connect one and two
@@ -67,7 +63,7 @@ const filterClasses = async (requestedOffering, targetLat, targetLng) => {
   for (let i = 0; i < filteredArray.length; ++i) {
     filteredArray[i].distanceBetween = 0;
     filteredArray[i].address_formatted = "Zoom";
-    filteredArray[i].city = "Online Class"
+    filteredArray[i].city = "Online Class";
   }
 
   const finalArray = filteredArray.slice(0, 10);
