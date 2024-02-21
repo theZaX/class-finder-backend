@@ -4,6 +4,7 @@ const app = express();
 const getConnectedClient = require("./database");
 const geocode = require("./mapsclient");
 const filterClasses = require("./filter-classes");
+const findVirtualClasses = require("./find-virtual-classes");
 
 app.use(cors());
 
@@ -15,10 +16,8 @@ app.get("/", async (req, res) => {
     // "x-appengine-citylatlong":"32.515985,-93.732123"
 
     const data = {
-      // city: req.headers["x-appengine-city"],
-      // cityLatLong: req.headers["x-appengine-citylatlong"],
-      city: "bossier city",
-      cityLatLong: "32.515985,-93.732123",
+      city: req.headers["x-appengine-city"],
+      cityLatLong: req.headers["x-appengine-citylatlong"],
     };
 
     // example data
@@ -47,6 +46,12 @@ app.get("/", async (req, res) => {
       target_lat_lng.longitude
     );
 
+    const virtClasses = await findVirtualClasses(
+      requestedOffering,
+      target_lat_lng.latitude,
+      target_lat_lng.longitude
+    );
+
     let niceLocation = target_city
       .split(" ")
       .map((word) => {
@@ -57,6 +62,7 @@ app.get("/", async (req, res) => {
     res.json({
       location: niceLocation,
       classes: finalArray,
+      virtclasses: virtClasses,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -88,10 +94,17 @@ app.get("/map", async (req, res) => {
       targetLng
     );
 
+    const virtClasses = await findVirtualClasses(
+      requestedOffering,
+      target_lat_lng.latitude,
+      target_lat_lng.longitude
+    );
+
     //sends the final array
     res.json({
       location: result.formatted_address,
       classes: finalArray,
+      virtclasses: virtClasses,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
