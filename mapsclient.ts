@@ -4,7 +4,7 @@ const key = "AIzaSyBQMs9MaCULeEo138EBs1flJO8IRkUaFQM";
 
 const client = new Client({});
 
-const geocode = async (address) => {
+const geocode = async (address: string) => {
   const geocoding = await client.geocode({
     params: {
       key,
@@ -15,4 +15,4 @@ const geocode = async (address) => {
   return geocoding.data.results[0];
 };
 
-module.exports = geocode;
+export default geocode;

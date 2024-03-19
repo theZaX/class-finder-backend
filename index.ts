@@ -1,17 +1,29 @@
-const express = require("express");
-var cors = require("cors");
+import { Request, Response } from "express";
+import filterClasses from "./filter-classes";
+import geocode from "./mapsclient";
+
+import express from "express";
+import cors from "cors";
+import findVirtualClasses from "./find-virtual-classes";
 const app = express();
-const getConnectedClient = require("./database");
-const geocode = require("./mapsclient");
-const filterClasses = require("./filter-classes");
-const findVirtualClasses = require("./find-virtual-classes");
+
+const parseLL = (ll_string: string) => {
+  const numbersArray = ll_string.split(",");
+  const latitude = parseFloat(numbersArray[0]);
+  const longitude = parseFloat(numbersArray[1]);
+
+  const cityLatLongObject = {
+    latitude,
+    longitude,
+  };
+  return cityLatLongObject;
+};
 
 app.use(cors());
 
 // the "/" endpoint should be used only for the initial request of the user uses the headers provided by google to detect the location
-app.get("/", async (req, res) => {
+app.get("/", async (req: Request, res: Response) => {
   try {
-    const client = await getConnectedClient();
     // "x-appengine-city":"bossier city"
     // "x-appengine-citylatlong":"32.515985,-93.732123"
 
@@ -24,33 +36,23 @@ app.get("/", async (req, res) => {
     //{"city":"bossier city","cityLatLong":"32.515985,-93.732123"}
 
     //code to parse the address
-    const parseLL = (ll_string) => {
-      const numbersArray = ll_string.split(",");
-      const latitude = parseFloat(numbersArray[0]);
-      const longitude = parseFloat(numbersArray[1]);
 
-      const cityLatLongObject = {
-        latitude,
-        longitude,
-      };
-      return cityLatLongObject;
-    };
-
-    target_city = data.city;
-    target_lat_lng = parseLL(data.cityLatLong);
+    const target_city = data.city as string;
+    const target_lat_lng = parseLL(data.cityLatLong as string);
     const requestedOffering = req.query.offering || "";
 
-    const finalArray = await filterClasses(
-      requestedOffering,
-      target_lat_lng.latitude,
-      target_lat_lng.longitude
-    );
-
-    const virtClasses = await findVirtualClasses(
-      requestedOffering,
-      target_lat_lng.latitude,
-      target_lat_lng.longitude
-    );
+    const [finalArray, virtClasses] = await Promise.all([
+      filterClasses(
+        requestedOffering as string,
+        target_lat_lng.latitude,
+        target_lat_lng.longitude
+      ),
+      findVirtualClasses(
+        requestedOffering as string,
+        target_lat_lng.latitude,
+        target_lat_lng.longitude
+      ),
+    ]);
 
     let niceLocation = target_city
       .split(" ")
@@ -65,18 +67,18 @@ app.get("/", async (req, res) => {
       virtclasses: virtClasses,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error });
   }
 });
 
 //the "/map" endpoint is used when you search for a location different
 //than the one detected. query parameters of location and offering are useable
 //must implement where if an offering parameter is not provided
-app.get("/map", async (req, res) => {
+app.get("/map", async (req: Request, res: Response) => {
   try {
     const location = req.query.location || "";
 
-    let result = await geocode(location);
+    let result = await geocode(location as string);
 
     if (!result) {
       // append usa
@@ -86,27 +88,19 @@ app.get("/map", async (req, res) => {
     const targetLat = result.geometry.location.lat;
     const targetLng = result.geometry.location.lng;
 
-    let requestedOffering = req.query.offering || "all";
+    let requestedOffering = (req.query.offering as string) || "all";
 
-    const finalArray = await filterClasses(
-      requestedOffering,
-      targetLat,
-      targetLng
-    );
-
-    const virtClasses = await findVirtualClasses(
-      requestedOffering,
-      target_lat_lng.latitude,
-      target_lat_lng.longitude
-    );
-
+    const [finalArray, virtClasses] = await Promise.all([
+      filterClasses(requestedOffering, targetLat, targetLng),
+      findVirtualClasses(requestedOffering, targetLat, targetLng),
+    ]);
     //sends the final array
     res.json({
       location: result.formatted_address,
       classes: finalArray,
       virtclasses: virtClasses,
     });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });

@@ -1,23 +1,36 @@
-const getConnectedClient = require("./database");
-const calculateDistance = require("./calculate-distance");
-const filterClasses = async (requestedOffering, targetLat, targetLng) => {
-  const client = await getConnectedClient();
-  const classesData =
-    await client.sql`select address_formatted, active, id, days_class_held, start_time, lat, lng, city, class_offering, class_modality from master_calendar`;
-  await client.end();
-
-  const classesWithDistance = classesData.rows
+import calculateDistance from "./calculate-distance";
+import { db } from "./database";
+const findVirtualClasses = async (
+  requestedOffering: string,
+  targetLat: number,
+  targetLng: number
+) => {
+  const classesData = await db.query.masterCalendar.findMany({
+    columns: {
+      addressFormatted: true,
+      active: true,
+      id: true,
+      daysClassHeld: true,
+      startTime: true,
+      lat: true,
+      lng: true,
+      city: true,
+      classOffering: true,
+      classModality: true,
+    },
+  });
+  const classesWithDistance = classesData
 
     .filter((classRecord) => {
       // Add your filter condition here, for example:
       // Only include classes with class_modality of 'virtual'
-      return classRecord.class_modality === "Virtual-Online";
+      return classRecord.classModality === "Virtual-Online";
     })
 
     .map((classRecord) => {
       const distanceBetween = calculateDistance(
-        classRecord.lat,
-        classRecord.lng,
+        classRecord.lat as any,
+        classRecord.lng as any,
         targetLat,
         targetLng
       );
@@ -35,8 +48,8 @@ const filterClasses = async (requestedOffering, targetLat, targetLng) => {
   if (requestedOffering === "EnglishConnect") {
     filteredArray = classesWithDistance.filter((classData) => {
       if (
-        classData.class_offering === "EnglishConnect 1" ||
-        classData.class_offering === "EnglishConnect 2"
+        classData.classOffering === "EnglishConnect 1" ||
+        classData.classOffering === "EnglishConnect 2"
       ) {
         return true;
       } else return false;
@@ -51,7 +64,7 @@ const filterClasses = async (requestedOffering, targetLat, targetLng) => {
   } else {
     //if it is anything else filter based on the requested offering query
     filteredArray = classesWithDistance.filter((classData) => {
-      if (classData.class_offering === requestedOffering) {
+      if (classData.classOffering === requestedOffering) {
         return true;
       } else return false;
     });
@@ -62,13 +75,12 @@ const filterClasses = async (requestedOffering, targetLat, targetLng) => {
 
   for (let i = 0; i < filteredArray.length; ++i) {
     filteredArray[i].distanceBetween = 0;
-    filteredArray[i].address_formatted = "Zoom";
+    filteredArray[i].addressFormatted = "Zoom";
     filteredArray[i].city = "Online Class";
   }
 
   const finalArray = filteredArray.slice(0, 10);
-  console.log(finalArray);
   return finalArray;
 };
 
-module.exports = filterClasses;
+export default findVirtualClasses;
