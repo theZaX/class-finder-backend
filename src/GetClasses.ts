@@ -23,6 +23,7 @@ interface Class {
 	address_formatted: string;
 	lat: number;
 	lng: number;
+	num_enrollments: number;
 }
 
 /**
@@ -46,25 +47,27 @@ export interface ClassFilterOptions {
 export async function getClasses(options: ClassFilterOptions) {
 	return sql<Class[]>`
 		SELECT 
-			id,
-			active,
-			advertising,
-			class_offering,
-			class_modality,
-			class_language,
-			start_date,
-			end_date,
-			days_class_held,
-			start_time,
-			class_end,
-			location_address,
-			city,
-			state,
-			zip_code,
-			address_formatted,
-			lat,
-			lng
-		FROM master_calendar
+			mc.id,
+			mc.active,
+			mc.advertising,
+			mc.class_offering,
+			mc.class_modality,
+			mc.class_language,
+			mc.start_date,
+			mc.end_date,
+			mc.days_class_held,
+			mc.start_time,
+			mc.class_end,
+			mc.location_address,
+			mc.city,
+			mc.state,
+			mc.zip_code,
+			mc.address_formatted,
+			mc.lat,
+			mc.lng,
+			COUNT(e.id) AS num_enrollments
+		FROM master_calendar AS mc
+		LEFT JOIN enrollments AS e ON mc.id = e.class_id
 		WHERE
 			active = true
 			AND start_date <= CURRENT_DATE + 14
@@ -82,14 +85,20 @@ export async function getClasses(options: ClassFilterOptions) {
 			${options.modality && options.modality !== "all"
 				? sql`AND class_modality = ${options.modality}`
 				: sql``
-			};
+			}
+		GROUP BY mc.id;
 	`.then(classes => {
 		return classes
 			.map(clazz => ({ // "class" is a reserved keyword, so "clazz" is used instead
 				...clazz,
 				distance: greatCircle(clazz.lat, clazz.lng, options.lat, options.lon)
 			}))
-			.sort(({distance: d1}, {distance: d2}) => d1 - d2)
+			.sort((class1, class2) => {
+				// Sort by distance. In the case of a tie, sort by number of enrollments, then by advertising.
+				return (class1.distance - class2.distance)
+					|| (class1.num_enrollments - class2.num_enrollments)
+					|| (class1.advertising !== class2.advertising ? (class1.advertising ? -1 : 1) : 0);
+			})
 			.slice(options.offset || 0, (options.offset || 0) + (options.limit || 10));
 	});
 }
