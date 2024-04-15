@@ -21,7 +21,7 @@ interface QueryParams extends Partial<{
 interface Request extends express.Request<{}, {}, {}, QueryParams> {};
 
 /**
- * The index endpoint ("/") is generally only used for the initial request from the user, defaulting the location to the user's ip.
+ * The index endpoint is generally only used for the initial request from the user, defaulting the requested location to the user's ip.
  */
 app.get("/", (request: Request, response) => {
 	findClasses(request)
@@ -49,19 +49,35 @@ async function findClasses(request: Request) {
 
 	console.log("Finding classes...", location, offering, language, modality, offset, limit);
 
-	// Get the location from the query params. If it is not provided, default to the headers "x-appengine-city" and "x-appengine-citylatlong", provided by the Google Cloud Functions runtime.
-	
-	// Example headers
+	// Get the location from the query params.
+	// If not provided, default to the headers "x-appengine-city" and "x-appengine-citylatlong"
+	// provided by the Google Cloud Functions runtime.
+	// Example headers:
 	// "x-appengine-city": "bossier city"
 	// "x-appengine-citylatlong": "32.515985,-93.732123"
-	
 	const {geometry: {location: {lat, lng: lon}}, formatted_address: address} = location
-		? (await getGeocode(normalize(location))) ?? (await getGeocode((normalize(location) + " USA"))) ?? {geometry: {location: {lat: NaN, lng: NaN}}, formatted_address: "USA"}
-		: {geometry: {location: {lat: Number((request.headers["x-appengine-citylatlong"] as string).split(",")[0]), lng: Number((request.headers["x-appengine-citylatlong"] as string).split(",")[1])}}, formatted_address: request.headers["x-appengine-city"] as string};
+		? (await getGeocode(normalize(location)))
+			?? (await getGeocode((normalize(location) + " USA")))
+			?? {geometry: {location: {lat: NaN, lng: NaN}}, formatted_address: "USA"}
+		: {
+			geometry: {location: {
+				lat: Number((request.headers["x-appengine-citylatlong"] as string)?.split(",")[0]),
+				lng: Number((request.headers["x-appengine-citylatlong"] as string)?.split(",")[1])
+			}},
+			formatted_address: request.headers["x-appengine-city"] as string
+		};
 
 	return {
-		location: address.replace(/\b([a-z])(?!\s|$)/g, char => char.toUpperCase()),
-		classes: await getClasses({lat, lon, offering: normalize(offering), language: normalize(language), modality: normalize(modality), offset: Math.max(parseInt(normalize(offset) ?? "") || 0, 0), limit: Math.min(Math.max(parseInt(normalize(limit) ?? "") || 10, 1), 100)})
+		location: address?.replace(/\b([a-z])(?!\s|$)/g, char => char.toUpperCase()),
+		classes: await getClasses({
+			lat,
+			lon,
+			offering: normalize(offering),
+			language: normalize(language),
+			modality: normalize(modality),
+			offset: Math.max(parseInt(normalize(offset) ?? "") || 0, 0),
+			limit: Math.min(Math.max(parseInt(normalize(limit) ?? "") || 10, 1), 100)
+		})
 	}
 }
 
