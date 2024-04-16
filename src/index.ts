@@ -69,7 +69,7 @@ async function findClasses(request: Request) {
 
 	return {
 		location: address?.replace(/\b([a-z])(?!\s|$)/g, char => char.toUpperCase()),
-		classes: await getClasses({
+		...await getClasses({
 			lat,
 			lon,
 			offering: normalize(offering),

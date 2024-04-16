@@ -88,17 +88,24 @@ export async function getClasses(options: ClassFilterOptions) {
 			}
 		GROUP BY mc.id;
 	`.then(classes => {
-		return classes
-			.map(clazz => ({ // "class" is a reserved keyword, so "clazz" is used instead
-				...clazz,
-				distance: greatCircle(clazz.lat, clazz.lng, options.lat, options.lon)
-			}))
-			.sort((class1, class2) => {
-				// Sort by distance. In the case of a tie, sort by number of enrollments, then by advertising.
-				return (class1.distance - class2.distance)
-					|| (class1.num_enrollments - class2.num_enrollments)
-					|| (class1.advertising !== class2.advertising ? (class1.advertising ? -1 : 1) : 0);
-			})
-			.slice(options.offset || 0, (options.offset || 0) + (options.limit || 10));
+		return {
+			// "class" is a reserved keyword, so "clazz" is used instead
+			classes: classes.filter(clazz => clazz.class_modality !== "Virtual-Online")
+				.map(clazz => ({
+					...clazz,
+					distance: greatCircle(clazz.lat, clazz.lng, options.lat, options.lon)
+				})).sort((class1, class2) => {
+					// Sort by distance. In the case of a tie, sort by number of enrollments, then by advertising.
+					return (class1.distance - class2.distance)
+						|| (class1.num_enrollments - class2.num_enrollments)
+						|| (class1.advertising !== class2.advertising ? (class1.advertising ? -1 : 1) : 0);
+				}).slice(options.offset || 0, (options.offset || 0) + (options.limit || 10)),
+			virtclasses: classes.filter(clazz => clazz.class_modality === "Virtual-Online")
+				.sort((class1, class2) => {
+					// Sort by number of enrollments, then by advertising.
+					return (class1.num_enrollments - class2.num_enrollments)
+						|| (class1.advertising !== class2.advertising ? (class1.advertising ? -1 : 1) : 0);
+				})
+		}
 	});
 }
