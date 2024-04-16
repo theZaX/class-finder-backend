@@ -1,0 +1,19 @@
+name: build
+on: [push]
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: npm install, build
+              run: |
+                npm ci
+                npm run build
+            - name: Upload artifact
+              uses: actions/upload-artifact@v4
+              with:
+                name: build
+                path: build
+    # TODO: Add test step
+    # TODO: Add deploy step
