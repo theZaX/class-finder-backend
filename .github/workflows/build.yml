@@ -16,6 +16,7 @@ jobs:
                 name: build
                 path: |
                     build
+                    !build/main.js
                     package.json
                     package-lock.json
     # TODO: Add test step
