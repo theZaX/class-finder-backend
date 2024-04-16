@@ -46,28 +46,33 @@ export interface ClassFilterOptions {
  */
 export async function getClasses(options: ClassFilterOptions) {
 	return sql<Class[]>`
-		SELECT 
-			mc.id,
-			mc.active,
-			mc.advertising,
-			mc.class_offering,
-			mc.class_modality,
-			mc.class_language,
-			mc.start_date,
-			mc.end_date,
-			mc.days_class_held,
-			mc.start_time,
-			mc.class_end,
-			mc.location_address,
-			mc.city,
-			mc.state,
-			mc.zip_code,
-			mc.address_formatted,
-			mc.lat,
-			mc.lng,
-			COUNT(e.id) AS num_enrollments
+		SELECT
+			id,
+			active,
+			advertising,
+			class_offering,
+			class_modality,
+			class_language,
+			start_date,
+			end_date,
+			days_class_held,
+			start_time,
+			class_end,
+			location_address,
+			city,
+			state,
+			zip_code,
+			address_formatted,
+			lat,
+			lng,
+			(
+				SELECT COUNT(e.id) AS num_enrollments
+				FROM enrollments AS e
+				WHERE
+					e.class_id = mc.id
+					AND e.created >= CURRENT_DATE - 30
+			)
 		FROM master_calendar AS mc
-		LEFT JOIN enrollments AS e ON mc.id = e.class_id
 		WHERE
 			active = true
 			AND start_date <= CURRENT_DATE + 14
