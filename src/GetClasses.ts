@@ -8,22 +8,22 @@ interface Class {
 	id: string;
 	active: boolean;
 	advertising: boolean;
-	class_offering: string;
-	class_modality: string;
-	class_language: string;
-	start_date: string;
-	end_date: string;
-	days_class_held: string;
-	start_time: string;
-	class_end: string;
-	location_address: string;
+	classOffering: string;
+	classModality: string;
+	classLanguage: string;
+	startDate: string;
+	endDate: string;
+	daysClassHeld: string;
+	startTime: string;
+	classEnd: string;
+	locationAddress: string;
 	city: string;
 	state: string;
-	zip_code: string;
-	address_formatted: string;
+	zipCode: string;
+	addressFormatted: string;
 	lat: number;
 	lng: number;
-	num_enrollments: number;
+	numEnrollments: number;
 }
 
 /**
@@ -95,20 +95,20 @@ export async function getClasses(options: ClassFilterOptions) {
 	`.then(classes => {
 		return {
 			// "class" is a reserved keyword, so "clazz" is used instead
-			classes: classes.filter(clazz => clazz.class_modality !== "Virtual-Online")
+			classes: classes.filter(clazz => clazz.classModality !== "Virtual-Online")
 				.map(clazz => ({
 					...clazz,
-					distance: greatCircle(clazz.lat, clazz.lng, options.lat, options.lon)
+					distanceBetween: greatCircle(clazz.lat, clazz.lng, options.lat, options.lon)
 				})).sort((class1, class2) => {
 					// Sort by distance. In the case of a tie, sort by number of enrollments, then by advertising.
-					return (class1.distance - class2.distance)
-						|| (class1.num_enrollments - class2.num_enrollments)
+					return (class1.distanceBetween - class2.distanceBetween)
+						|| (class1.numEnrollments - class2.numEnrollments)
 						|| (class1.advertising !== class2.advertising ? (class1.advertising ? -1 : 1) : 0);
 				}).slice(options.offset || 0, (options.offset || 0) + (options.limit || 10)),
-			virtclasses: classes.filter(clazz => clazz.class_modality === "Virtual-Online")
+			virtclasses: classes.filter(clazz => clazz.classModality === "Virtual-Online")
 				.sort((class1, class2) => {
 					// Sort by number of enrollments, then by advertising.
-					return (class1.num_enrollments - class2.num_enrollments)
+					return (class1.numEnrollments - class2.numEnrollments)
 						|| (class1.advertising !== class2.advertising ? (class1.advertising ? -1 : 1) : 0);
 				})
 		}
