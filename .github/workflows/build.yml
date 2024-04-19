@@ -6,18 +6,18 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v4
-            - name: npm install, build
+            - name: npm install, build, test
               run: |
                 npm ci
                 npm run build
+                npm run test
             - name: Upload artifact
+              if: ${{ success() }}
               uses: actions/upload-artifact@v4
               with:
                 name: build
                 path: |
                     build
-                    !build/main.js
                     package.json
                     package-lock.json
-    # TODO: Add test step
     # TODO: Add deploy step

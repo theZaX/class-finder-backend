@@ -13,6 +13,15 @@
 				"isDefault": true
 			},
 			"label": "watch"
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "tsconfig.json",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build",
+			"label": "build"
 		}
 	]
 }

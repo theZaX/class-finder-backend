@@ -14,8 +14,7 @@
 			],
 			"type": "node",
 			"console": "integratedTerminal",
-			"internalConsoleOptions": "neverOpen",
-			"preLaunchTask": "watch"
+			"internalConsoleOptions": "neverOpen"
 		},
 		{
 			"name": "Build",
@@ -28,6 +27,19 @@
 			"type": "node",
 			"console": "integratedTerminal",
 			"internalConsoleOptions": "neverOpen"
-		}
+		},
+		{
+			"name": "Test",
+			"request": "launch",
+			"runtimeArgs": ["run-script","test"],
+			"runtimeExecutable": "npm",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"type": "node",
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen",
+			"preLaunchTask": "build"
+		},
 	]
 }

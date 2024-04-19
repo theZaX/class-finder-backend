@@ -3,6 +3,7 @@ import express from "express";
 
 import { getClasses } from "./GetClasses.js";
 import { getGeocode } from "./Maps.js";
+import { sql } from "./Database.js";
 
 const app = express();
 app.use(cors());
@@ -27,7 +28,7 @@ app.get("/", (request: Request, response) => {
 	findClasses(request)
 		.then(data => response.status(200).json(data))
 		.catch(error => {
-			console.error(error);
+			if (process.env.NODE_ENV !== "test") console.error(error);
 			response.status(400).json({error: "Invalid request"});
 		});
 });
@@ -39,7 +40,7 @@ app.get("/map", async (request: Request, response) => {
 	findClasses(request)
 	.then(data => response.status(200).json(data))
 	.catch(error => {
-		console.error(error);
+		if (process.env.NODE_ENV !== "test") console.error(error);
 		response.status(400).json({error: "Invalid request"});
 	});
 });
@@ -47,7 +48,7 @@ app.get("/map", async (request: Request, response) => {
 async function findClasses(request: Request) {
 	const {location, offering, language, modality, offset, limit} = request.query;
 
-	console.log("Finding classes...", location, offering, language, modality, offset, limit);
+	if (process.env.NODE_ENV !== "test") console.log("Finding classes...", location, offering, language, modality, offset, limit);
 
 	// Get the location from the query params.
 	// If not provided, default to the headers "x-appengine-city" and "x-appengine-citylatlong"
@@ -76,7 +77,7 @@ async function findClasses(request: Request) {
 			language: normalize(language),
 			modality: normalize(modality),
 			offset: Math.max(parseInt(normalize(offset) ?? "") || 0, 0),
-			limit: Math.min(Math.max(parseInt(normalize(limit) ?? "") || 10, 1), 100)
+			limit: Math.min(Math.max(parseInt(normalize(limit) ?? ""), 1), 100) || 10
 		})
 	}
 }
@@ -88,4 +89,10 @@ function normalize<T extends Param | undefined>(param: T) {
 	return Array.isArray(param) ? param[0] : (param as Exclude<T, string[]>);
 }
 
-export { app };
+process.on("SIGINT", async () => {
+	console.log("Closing server and database connection...");
+	await sql.end();
+	process.exit(0);
+});
+
+export { app, sql };
