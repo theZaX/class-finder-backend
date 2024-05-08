@@ -2,45 +2,6 @@ import { greatCircle } from "./Distance.js";
 import { sql } from "./Database.js";
 
 /**
- * Class data
- */
-interface Class {
-	id: string;
-	active: boolean;
-	advertising: boolean;
-	classOffering: string;
-	classModality: string;
-	classLanguage: string;
-	startDate: string;
-	endDate: string;
-	daysClassHeld: string;
-	startTime: string;
-	classEnd: string;
-	locationAddress: string;
-	city: string;
-	state: string;
-	zipCode: string;
-	addressFormatted: string;
-	lat: number;
-	lng: number;
-	numEnrollments: number;
-}
-
-/**
- * Class filter options.  
- * `lat` and `lon` are in degrees.
- */
-export interface ClassFilterOptions {
-	lat: number;
-	lon: number;
-	offering?: string;
-	language?: string;
-	modality?: string;
-	offset?: number;
-	limit?: number;
-}
-
-/**
  * Gets classes from the database which match the given filters.  
  * Sorts by distance from the given location.
  */
@@ -63,6 +24,7 @@ export async function getClasses(options: ClassFilterOptions) {
 			state,
 			zip_code,
 			address_formatted,
+			maps_link,
 			lat,
 			lng,
 			(

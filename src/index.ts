@@ -8,23 +8,12 @@ import { sql } from "./Database.js";
 const app = express();
 app.use(cors());
 
-type Param = string | string[];
-
-interface QueryParams extends Partial<{
-	location: Param;
-	offering: Param;
-	language: Param;
-	modality: Param;
-	offset: Param;
-	limit: Param;
-}> {};
-
-interface Request extends express.Request<{}, {}, {}, QueryParams> {};
+interface IndexRequest extends express.Request<{}, {}, {}, IndexParams> {};
 
 /**
- * The index endpoint is generally only used for the initial request from the user, defaulting the requested location to the user's ip.
+ * Fetch a list of classes from the database, matching the given query
  */
-app.get("/", (request: Request, response) => {
+app.get("/", (request: IndexRequest, response) => {
 	findClasses(request)
 		.then(data => response.status(200).json(data))
 		.catch(error => {
@@ -45,7 +34,7 @@ app.get("/map", async (request: Request, response) => {
 	});
 });
 
-async function findClasses(request: Request) {
+async function findClasses(request: IndexRequest) {
 	const {location, offering, language, modality, offset, limit} = request.query;
 
 	if (process.env.NODE_ENV !== "test") console.log("Finding classes...", location, offering, language, modality, offset, limit);

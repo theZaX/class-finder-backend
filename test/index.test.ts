@@ -18,6 +18,7 @@ const classStruct = {
 	state: expect.any(String),
 	zipCode: expect.any(String),
 	addressFormatted: expect.any(String),
+	mapsLink: expect.any(String),
 	lat: expect.any(String),
 	lng: expect.any(String),
 	numEnrollments: expect.any(String)
@@ -34,7 +35,7 @@ async function queryEndpoints(query?: string, eachResponse?: (response: Response
 		return Promise.all(responses.map(response => response.json()));
 	}).then(jsons => {
 		if (eachJson) jsons.forEach(eachJson);
-		return jsons
+		return jsons;
 	});
 }
 
