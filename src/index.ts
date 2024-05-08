@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 
 import { getClasses } from "./GetClasses.js";
+import { getClassInfo } from "./GetClassInfo.js";
 import { getGeocode } from "./Maps.js";
 import { sql } from "./Database.js";
 
@@ -9,6 +10,7 @@ const app = express();
 app.use(cors());
 
 interface IndexRequest extends express.Request<{}, {}, {}, IndexParams> {};
+interface ClassInfoRequest extends express.Request<{}, {}, {}, ClassInfoParams> {};
 
 /**
  * Fetch a list of classes from the database, matching the given query
@@ -23,15 +25,17 @@ app.get("/", (request: IndexRequest, response) => {
 });
 
 /**
- * The `/map` endpoint is generally used when searching for a location different than the one detected from the ip.
+ * Fetch a single class from the database
  */
-app.get("/map", async (request: Request, response) => {
-	findClasses(request)
-	.then(data => response.status(200).json(data))
-	.catch(error => {
-		if (process.env.NODE_ENV !== "test") console.error(error);
-		response.status(400).json({error: "Invalid request"});
-	});
+app.get("/class", (request: ClassInfoRequest, response) => {
+	const {classId} = request.query;
+	if (!classId) return response.status(400).json({error: "Invalid request"});
+	getClassInfo(normalize(classId))
+		.then(data => response.status(200).json(data))
+		.catch(error => {
+			if (process.env.NODE_ENV !== "test") console.error(error);
+			response.status(400).json({error: "Invalid request"});
+		});
 });
 
 async function findClasses(request: IndexRequest) {

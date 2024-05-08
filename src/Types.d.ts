@@ -48,3 +48,7 @@ declare interface IndexParams extends Partial<{
 	offset: Param;
 	limit: Param;
 }> {};
+
+declare interface ClassInfoParams extends Partial<{
+	classId: Param;
+}> {};

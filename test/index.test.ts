@@ -28,8 +28,7 @@ let server: Server;
 
 async function queryEndpoints(query?: string, eachResponse?: (response: Response) => void, eachJson?: (json: any) => void) {
 	return Promise.all([
-		fetch(`http://localhost:3000/?${query}`),
-		fetch(`http://localhost:3000/map?${query}`)
+		fetch(`http://localhost:3000/?${query}`)
 	]).then(responses => {
 		if (eachResponse) responses.forEach(eachResponse);
 		return Promise.all(responses.map(response => response.json()));
@@ -90,12 +89,6 @@ describe("Response Structure Checking", () => {
 	test("Infer location query", async () => {
 		return Promise.all([
 			fetch("http://localhost:3000/", {
-				headers: {
-					"x-appengine-city": "houston",
-					"x-appengine-citylatlong": "29.749,-95.358"
-				}
-			}),
-			fetch("http://localhost:3000/map", {
 				headers: {
 					"x-appengine-city": "houston",
 					"x-appengine-citylatlong": "29.749,-95.358"
@@ -541,7 +534,7 @@ describe("Unusual Requests", () => {
 				expect(json).toHaveProperty("classes");
 				expect(json).toHaveProperty("virtclasses");
 				// The response should be the classes grabbed previously
-				expect(json.classes).toStrictEqual(classes[i++].classes);
+				expect(json.classes).toStrictEqual(classes[i].classes);
 				expect(json.virtclasses).toStrictEqual(classes[i++].virtclasses);
 			}
 		);
