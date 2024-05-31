@@ -37,7 +37,7 @@ export async function getClasses(options: ClassFilterOptions) {
 		FROM master_calendar AS mc
 		WHERE
 			active = true
-			AND start_date <= CURRENT_DATE + 14
+			AND start_date <= CURRENT_DATE + 21
 			AND end_date >= CURRENT_DATE
 			${options.offering && options.offering !== "all"
 				? sql`AND class_offering IN ${sql(/english[^0-9]*$/gi.test(options.offering)
