@@ -1,5 +1,8 @@
-import type { Server } from "http";
+import { expect, test } from "@jest/globals";
 import { app, sql } from "../build/index.js";
+import "./dateComparison";
+
+import type { Server } from "http";
 
 const classStruct = {
 	id: expect.any(String),
@@ -56,9 +59,9 @@ describe("Response Structure Checking", () => {
 				expect(json).toHaveProperty("virtclasses");
 				expect(json.classes.length).toBeGreaterThan(0);
 				expect(json.virtclasses.length).toBeGreaterThan(0);
-				// The distance between classes will be null since no location was specified
-				json.classes.forEach((clazz: any) => expect(clazz).toMatchObject({...classStruct, distanceBetween: null}));
-				json.virtclasses.forEach((clazz: any) => expect(clazz).toMatchObject(classStruct));
+				// The distance between physical classes will be null since no location was specified, and the start dates must be 21 days from now or earlier
+				json.classes.forEach((clazz: any) => expect(clazz).toMatchObject({...classStruct, distanceBetween: null, startDate: expect.toBeEarlierThanOrEqualToDate(new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 21).toDateString())}));
+				json.virtclasses.forEach((clazz: any) => expect(clazz).toMatchObject({...classStruct, startDate: expect.toBeEarlierThanOrEqualToDate(new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 21).toDateString())}));
 			}
 		);
 	});
@@ -218,6 +221,46 @@ describe("Response Structure Checking", () => {
 			}
 		);
 	});
+
+	test("Infinite start date window query", async () => {
+		return queryEndpoints(
+			"startDateWindow=-1",
+			response => {
+				expect(response.status).toBe(200);
+				expect(response.headers.get("Content-Type")).toContain("application/json");
+			},
+			json => {
+				// The response should contain a list of classes
+				expect(json).toHaveProperty("classes");
+				expect(json).toHaveProperty("virtclasses");
+				expect(json.classes.length).toBeGreaterThan(0);
+				expect(json.virtclasses.length).toBeGreaterThan(0);
+				// Each class should match the expected response structure
+				json.classes.forEach((clazz: any) => expect(clazz).toMatchObject(classStruct));
+				json.virtclasses.forEach((clazz: any) => expect(clazz).toMatchObject(classStruct));
+			}
+		);
+	});
+
+	test("Zero start date window query", async () => {
+		return queryEndpoints(
+			"startDateWindow=0",
+			response => {
+				expect(response.status).toBe(200);
+				expect(response.headers.get("Content-Type")).toContain("application/json");
+			},
+			json => {
+				// The response should contain a list of classes
+				expect(json).toHaveProperty("classes");
+				expect(json).toHaveProperty("virtclasses");
+				expect(json.classes.length).toBeGreaterThan(0);
+				expect(json.virtclasses.length).toBeGreaterThan(0);
+				// Each class should have started today or earlier
+				json.classes.forEach((clazz: any) => expect(clazz).toMatchObject({...classStruct, startDate: expect.toBeEarlierThanOrEqualToDate(new Date().toDateString())}));
+				json.virtclasses.forEach((clazz: any) => expect(clazz).toMatchObject({...classStruct, startDate: expect.toBeEarlierThanOrEqualToDate(new Date().toDateString())}));
+			}
+		);
+	});
 	
 	test("Offset and limit query", async () => {
 		const classes = await queryEndpoints(
@@ -282,7 +325,7 @@ describe("Response Structure Checking", () => {
 	
 	test("Combo query", async () => {
 		return queryEndpoints(
-			"location=Houston,TX&offering=English&language=Spanish&modality=In Person&limit=5",
+			"location=Houston,TX&offering=English&language=Spanish&modality=In Person&limit=5&startDateWindow=0",
 			response => {
 				expect(response.status).toBe(200);
 				expect(response.headers.get("Content-Type")).toContain("application/json");
@@ -297,12 +340,13 @@ describe("Response Structure Checking", () => {
 				// There should only be exactly 5 physical classes
 				expect(json.classes).toHaveLength(5);
 				expect(json.virtclasses).toHaveLength(0);
-				// Each physical class should have a numeric distance, be either English(Connect) 1/2, and be held in Spanish
+				// Each physical class should have a numeric distance, be either English(Connect) 1/2, be held in Spanish, and have started today or earlier
 				json.classes.forEach((clazz: any) => expect(clazz).toMatchObject({
 					...classStruct,
 					distanceBetween: expect.any(Number),
 					classOffering: expect.stringMatching(/^english(connect)? \d$/gi),
-					classLanguage: "Spanish"
+					classLanguage: "Spanish",
+					startDate: expect.toBeEarlierThanOrEqualToDate(new Date().toDateString())
 				}));
 				expect(json.classes.every((clazz: any) => json.classes[0].classOffering === clazz.classOffering)).toBeFalsy();
 			}
@@ -404,6 +448,46 @@ describe("Unusual Requests", () => {
 				json.classes.forEach((clazz: any) => expect(clazz).toMatchObject({classModality: "In Person"}));
 			}
 		);
+	});
+
+	test("Multiple start date windows query", async () => {
+		return queryEndpoints(
+			"startDateWindow=0&startDateWindow=-1",
+			response => {
+				expect(response.status).toBe(200);
+				expect(response.headers.get("Content-Type")).toContain("application/json");
+			},
+			json => {
+				// The response should contain a list of classes
+				expect(json).toHaveProperty("classes");
+				expect(json).toHaveProperty("virtclasses");
+				expect(json.classes.length).toBeGreaterThan(0);
+				expect(json.virtclasses.length).toBeGreaterThan(0);
+				// Each class should have started today or earlier
+				json.classes.forEach((clazz: any) => expect(clazz).toMatchObject({startDate: expect.toBeEarlierThanOrEqualToDate(new Date().toDateString())}));
+				json.virtclasses.forEach((clazz: any) => expect(clazz).toMatchObject({startDate: expect.toBeEarlierThanOrEqualToDate(new Date().toDateString())}));
+			}
+		);
+	});
+
+	test("NaN start date window query", async () => {
+		return queryEndpoints(
+			"startDateWindow=foo",
+			response => {
+				expect(response.status).toBe(200);
+				expect(response.headers.get("Content-Type")).toContain("application/json");
+			},
+			json => {
+				// The response should always return a list of classes
+				expect(json).toHaveProperty("classes");
+				expect(json).toHaveProperty("virtclasses");
+				expect(json.classes.length).toBeGreaterThan(0);
+				expect(json.virtclasses.length).toBeGreaterThan(0);
+				// The start dates must be 21 days from now or earlier
+				json.classes.forEach((clazz: any) => expect(clazz).toMatchObject({startDate: expect.toBeEarlierThanOrEqualToDate(new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 21).toDateString())}));
+				json.virtclasses.forEach((clazz: any) => expect(clazz).toMatchObject({startDate: expect.toBeEarlierThanOrEqualToDate(new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 21).toDateString())}));
+			}
+		)
 	});
 
 	test("Multiple offsets and limits query", async () => {

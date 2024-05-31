@@ -34,6 +34,7 @@ declare interface ClassFilterOptions {
 	offering?: string;
 	language?: string;
 	modality?: string;
+	startDateWindow?: number;
 	offset?: number;
 	limit?: number;
 }
@@ -45,6 +46,7 @@ declare interface IndexParams extends Partial<{
 	offering: Param;
 	language: Param;
 	modality: Param;
+	startDateWindow: Param;
 	offset: Param;
 	limit: Param;
 }> {};

@@ -39,9 +39,9 @@ app.get("/class", (request: ClassInfoRequest, response) => {
 });
 
 async function findClasses(request: IndexRequest) {
-	const {location, offering, language, modality, offset, limit} = request.query;
+	const {location, offering, language, modality, startDateWindow, offset, limit} = request.query;
 
-	if (process.env.NODE_ENV !== "test") console.log("Finding classes...", location, offering, language, modality, offset, limit);
+	if (process.env.NODE_ENV !== "test") console.log("Finding classes...", location, offering, language, modality, startDateWindow, offset, limit);
 
 	// Get the location from the query params.
 	// If not provided, default to the headers "x-appengine-city" and "x-appengine-citylatlong"
@@ -69,6 +69,7 @@ async function findClasses(request: IndexRequest) {
 			offering: normalize(offering),
 			language: normalize(language),
 			modality: normalize(modality),
+			startDateWindow: Math.max(isNaN(parseInt(normalize(startDateWindow) ?? "")) ? 21 : parseInt(normalize(startDateWindow) ?? "21"), -1),
 			offset: Math.max(parseInt(normalize(offset) ?? "") || 0, 0),
 			limit: Math.min(Math.max(parseInt(normalize(limit) ?? ""), 1), 100) || 10
 		})
