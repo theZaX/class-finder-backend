@@ -19,6 +19,7 @@ export async function getClasses(options: ClassFilterOptions) {
 			days_class_held,
 			start_time,
 			class_end,
+			timezone,
 			location_address,
 			city,
 			state,

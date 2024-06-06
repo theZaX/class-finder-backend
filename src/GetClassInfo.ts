@@ -14,6 +14,7 @@ export async function getClassInfo(id: string) {
 			days_class_held,
 			start_time,
 			class_end,
+			timezone,
 			location_address,
 			city,
 			state,

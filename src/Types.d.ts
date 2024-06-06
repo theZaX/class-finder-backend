@@ -13,6 +13,7 @@ declare interface Class {
 	daysClassHeld: string;
 	startTime: string;
 	classEnd: string;
+	timezone: string;
 	locationAddress: string;
 	city: string;
 	state: string;

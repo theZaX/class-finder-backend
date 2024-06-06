@@ -13,6 +13,7 @@ const classStruct = {
 	daysClassHeld: expect.any(String),
 	startTime: expect.any(String),
 	classEnd: expect.any(String),
+	timezone: expect.any(String),
 	locationAddress: expect.any(String),
 	city: expect.any(String),
 	state: expect.any(String),
