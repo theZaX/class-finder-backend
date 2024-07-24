@@ -39,7 +39,7 @@ export async function getClasses(options: ClassFilterOptions) {
 		WHERE
 			active = true
 			AND start_date <= ${options.startDateWindow === - 1 ? sql`'INFINITY'` : sql`CURRENT_DATE + ${options.startDateWindow ?? 21}::INTEGER`}
-			AND end_date >= CURRENT_DATE
+			AND end_date > CURRENT_DATE
 			${options.offering && options.offering !== "all"
 				? sql`AND class_offering IN ${sql(/english[^0-9]*$/gi.test(options.offering)
 					? ["EnglishConnect 1", "EnglishConnect 2"]
