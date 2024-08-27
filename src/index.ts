@@ -1,16 +1,20 @@
 import cors from "cors";
 import express from "express";
 
+import { sql } from "./Database.js";
 import { getClasses } from "./GetClasses.js";
 import { getClassInfo } from "./GetClassInfo.js";
+import { Localize } from "./GetTranslation.js";
 import { getGeocode } from "./Maps.js";
-import { sql } from "./Database.js";
 
 const app = express();
 app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
 
 interface IndexRequest extends express.Request<{}, {}, {}, IndexParams> {};
 interface ClassInfoRequest extends express.Request<{}, {}, {}, ClassInfoParams> {};
+interface L10nRequest extends express.Request<{}, {}, Partial<L10nParams>> {};
 
 /**
  * Fetch a list of classes from the database, matching the given query
@@ -75,6 +79,28 @@ async function findClasses(request: IndexRequest) {
 		})
 	}
 }
+
+/**
+ * Return the interpolated translation for the given key and language
+ */
+app.post("/l10n", (request: L10nRequest, response) => {
+	let {key, lang, args = []} = request.body;
+
+	if (typeof(key) !== "string") return response.status(400).json({error: "Invalid request"});
+	if (typeof(lang) !== "string") return response.status(400).json({error: "Invalid request"});
+	if (!Array.isArray(args)) return response.status(400).json({error: "Invalid request"});
+
+	if (["English", "Spanish", "Chinese", "French"].indexOf(lang) === -1) return response.status(400).json({error: "Invalid request"});
+	
+	if (process.env.NODE_ENV !== "test") console.log("L10n", key, lang);
+
+	Localize(key, lang, args)
+		.then(data => response.status(200).json(data))
+		.catch(error => {
+			if (process.env.NODE_ENV !== "test") console.error(error);
+			response.status(400).json({error: "Invalid request"});
+		});
+});
 
 /**
  * Normalizes the given param. Returns the first item in an array if the param is an array, or the param itself.

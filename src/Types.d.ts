@@ -40,6 +40,14 @@ declare interface ClassFilterOptions {
 	limit?: number;
 }
 
+declare interface Translation {
+	[key: string]: string;
+	english: string;
+	spanish: string;
+	chinese: string;
+	french: string;
+}
+
 declare type Param = string | string[];
 
 declare interface IndexParams extends Partial<{
@@ -55,3 +63,9 @@ declare interface IndexParams extends Partial<{
 declare interface ClassInfoParams extends Partial<{
 	classId: Param;
 }> {};
+
+declare interface L10nParams {
+	key: string;
+	lang: string;
+	args: (string | L10nParams)[];
+};
